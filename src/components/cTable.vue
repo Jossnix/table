@@ -1,10 +1,15 @@
 <template>
   <div class="hello">
     Hi
-    <table v-for = "(item, index) in arrData" :key = item>
+    <table border = "1">
       <tr>
-        <td>
-          {{ item }} {{index}}
+        <td v-for = "dataHead in arrHead">
+          {{ dataHead }}
+        </td>
+      </tr>
+      <tr v-for = "(dataRow, indexRow) in arrData" :key = item>
+        <td v-for = "(dataCell, keyCell, indexCell) in dataRow">
+          {{dataCell}}
         </td>
       </tr>
     </table>
@@ -26,7 +31,8 @@ export default {
         {text1: "value 13", text2: "value 23"},
         {text1: "value 14", text2: "value 24"},
         {text1: "value 15", text2: "value 25"},
-      ]
+      ],
+      arrHead: ["text1", "text2"]
     }
   }
 }
