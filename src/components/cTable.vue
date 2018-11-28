@@ -1,16 +1,29 @@
 <template>
   <div class="hello">
     Hi
-    <table border = "1">
-      <tr>
-        <td v-for = "dataHead in arrHead">
-          {{ dataHead }}
+    <table id = "tableGlobal" border = '1' width = "100%">
+      <tr v-show="showFilterFlag">
+        <td  v-for="nameRow in tableData.info" :width = "nameRow.size">
+          <input type = "text" :placeholder=" nameRow.description || nameRow.name ">
         </td>
       </tr>
-      <tr v-for = "(dataRow, indexRow) in arrData" :key = item>
-        <td v-for = "(dataCell, keyCell, indexCell) in dataRow">
-          {{dataCell}}
+      <tr>
+        <td v-for="nameRow in tableData.info" :width = "nameRow.size">{{ nameRow.description || nameRow.name }}</td>
+      </tr>
+      <!-- <tr>
+        <td :colspan="tableData.info.length"> {{ tableData.info.length }}
+        <table id = "tableData" border = '1'> -->
+          <tr v-for="lineContent in tableData.content" :key="lineContent.id">
+            <td v-for="(cell, cKey) in lineContent"> {{ cell }}</td>
+          </tr>
+        <!-- </table>
         </td>
+      </tr> -->
+      <tr>
+        <td>
+          <button @click="showFilter()">Filter</button>
+        </td>
+        <td>кнопка + управление</td>
       </tr>
     </table>
   </div>
@@ -24,16 +37,76 @@ export default {
   },
   data: function() {
     return{
-      arrData: [
-        {text1: "value 1", text2: "value 2"},
-        {text1: "value 11", text2: "value 21"},
-        {text1: "value 12", text2: "value 22"},
-        {text1: "value 13", text2: "value 23"},
-        {text1: "value 14", text2: "value 24"},
-        {text1: "value 15", text2: "value 25"},
-      ],
-      arrHead: ["text1", "text2"]
+      showFilterFlag: false,
+      filterValue: {},
+      tableData: {
+        info:{
+          cId: {
+            'name': 'cId',
+            'description': 'Идентификатор',
+            'size': 10,
+            'visible': true
+          },
+          cName: {
+            'name': 'cName',
+            'description': 'Имя',
+            'size': 10,
+            'visible': true
+          },
+          cComment: {
+            'name': 'cComment',
+            'description': '',
+            'size': 10,
+            'visible': true
+          }
+        },
+        content: [
+          {
+            'cId': 1,
+            'cName': 'name1',
+            'cComment': 'comment 1'
+          },
+          {
+            'cId': 2,
+            'cName': 'name2',
+            'cComment': 'comment 2'
+          },
+          {
+            'cId': 3,
+            'cName': 'name3',
+            'cComment': 'comment 3'
+          },
+          {
+            'cId': 4,
+            'cName': 'name4',
+            'cComment': 'comment 4'
+          }
+        ]
+      }
     }
+  },
+  methods: {
+    // показать/скрыть фильтры
+    showFilter(){
+      console.log (">start showFilter");
+      this.showFilterFlag =! this.showFilterFlag;
+    },
+    // изменить размер ширины ячейки
+    calcSizeHead(){
+      console.log (">start calcSizeHead");
+      let keysInfo,
+          tableInfo = this.tableData.info,
+          indKey;
+      keysInfo = Object.keys(tableInfo);
+      console.log("-> keysInfo: ", keysInfo);
+      for(indKey = 0; indKey < keysInfo.length; indKey++) {
+        tableInfo[keysInfo[indKey]].size = Math.max(tableInfo[keysInfo[indKey]].name.length, tableInfo[keysInfo[indKey]].description.length, tableInfo[keysInfo[indKey]].size);
+        console.log("-> tableInfo.size: ", tableInfo[keysInfo[indKey]].size);
+      }
+    }
+  },
+  created(){
+    this.calcSizeHead();
   }
 }
 </script>
