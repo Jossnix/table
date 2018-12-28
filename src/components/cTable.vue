@@ -5,25 +5,33 @@
                 <div id = "hTable" :style = "{ width: tHeadWidth }">
                     <table id = "headTable">
                         <tr>
-                            <td v-for="(nameRow, iKey, indNam) in tableData.info" :width = "nameRow.sizeProc">{{ nameRow.description || nameRow.name }}</td>
+                            <td v-for="(nameRow, iKey, indNam) in tableData.info" :width = "nameRow.sizeProc" @click = "sortBy(iKey)" :class="{ active: sortKey == iKey }">
+                                <!-- {{ nameRow.description || nameRow.name }}
+                                <span class="arrow" :class="sortFlag.sorted && sortFlag.key === iKey ? 'asc' : 'dsc'">
+                                </span> -->
+                                <div id = "headTd">
+                                    <div id = "dataTd">{{ nameRow.description || nameRow.name }}</div>
+                                    <div id = "sortTd"><span class="arrow" :class="sortFlag.sorted && sortFlag.key === iKey ? 'asc' : 'dsc'"></span></div>
+                                </div>
+                            </td>
                         </tr>
                         <tr v-show="filterVisible" >
-                            <td  v-for="nameRow in tableData.info" :width = "nameRow.sizeProc">
-                            <input type = "text" style = "width: 100%; text-align: center" :placeholder="nameRow.description || nameRow.name ">
+                            <td  v-for="(nameRow, fKey) in tableData.info" :width = "nameRow.sizeProc">
+                            <input type = "text" style = "width: 100%; text-align: center" :placeholder="nameRow.description || nameRow.name " v-model="findText[fKey]">
                             </td>
                         </tr>
                     </table>
                 </div>
                 <div id = "bTable">
                     <table id = "cTable">
-                        <tr id  = "cLine" v-for="(lineContent, indContent) in tableData.content" :key="lineContent.id" @mouseover="markBack(indContent)" @mouseout="cleanMarkBack" :class = "(markTrmMouse && markRow===indContent) ? 'trBack' : '' ">
+                        <tr id  = "cLine" v-for="(lineContent, indContent) in sortedList" :key="lineContent.id" @mouseover="markBack(indContent)" @mouseout="cleanMarkBack" :class = "(markTrmMouse && markRow===indContent) ? 'trBack' : '' ">
                             <td v-for="(cell, cKey, indName) in lineContent" :width = "tableData.info[cKey].sizeProc"> {{ cell }} </td>
                         </tr>
                     </table>
                 </div>
             </div>
             <div id = "panFoot">
-                <button @click="showFilter()">Filter</button>
+                <button id = "butFilter" @click="showFilter()">Filter</button>
             </div>
         </div>
     </div>
@@ -32,9 +40,13 @@
 <script>
     import Vue from 'vue'
     import {tableData1} from './tmpArray.js'
+    import {someCompareObj} from './internalFunction.js'
     export default {
         data () {
             return{
+                findText: [],
+                sortKey: "",
+                sortFlag: {oldKey: '', key: '', sorted: false},
                 tHeadWidth: "100%",
                 tBodyWidth: 1920,
                 startTableBody: 158,
@@ -52,7 +64,22 @@
                 console.log(">start showFilter");
                 this.filterVisible = !this.filterVisible;
                 console.log("-> filter Visible: ", this.filterVisible);
-                this.tHeadWidth = (this.tBodyWidth*100)/document.body.offsetWidth + "%"
+                this.tHeadWidth = (this.tBodyWidth*100)/document.body.offsetWidth + "%";
+                console.log("-> content filters: ", this.findText);
+            },
+            sortBy(key){
+                console.log(">start sortBy");
+                // alert("Sort by: "+ key);
+                this.sortKey = key;
+                this.sortFlag.oldKey = this.sortFlag.key;
+                this.sortFlag.key = key;
+                if (this.sortFlag.oldKey==="" || this.sortFlag.oldKey !== this.sortFlag.key) {
+                    this.sortFlag.sorted = true;
+                }
+                if (this.sortFlag.oldKey === this.sortFlag.key) {
+                    this.sortFlag.sorted = !this.sortFlag.sorted;
+                }
+                console.log("DATA:", this.sortFlag.sorted);
             },
             async calcSizeHead(){
                 console.log (">start calcSizeHead");
@@ -107,6 +134,39 @@
                 this.tBodyWidth = document.getElementById("bTable").scrollWidth;
                 this.tHeadWidth = (this.tBodyWidth*100)/document.body.offsetWidth + "%"
                 this.calcSizeHead();
+            },
+            customCompare (a, b) {
+                let inSortKey = this.sortKey;
+                if (a[inSortKey] < b[inSortKey]) {
+                    return -1;
+                }
+                if (a[inSortKey] > b[inSortKey]) {
+                    return 1;
+                }
+                return 0;
+            },
+            customFilter (item, index, array) {
+                let filterKeys = Object.keys(this.findText),
+                    indexKey,
+                    clearFilter = true,
+                    findData = this.findText;
+                for (indexKey = 0; indexKey < filterKeys.length; indexKey++) {
+                    if (findData[filterKeys[indexKey]].length) {
+                        clearFilter = false;
+                        break
+                    }
+                }
+                if (clearFilter) {
+                    return true
+                }
+                console.log("-> item: ", item[filterKeys[0]]);
+                console.log("-> itemF: ", findData[filterKeys[0]]);
+                console.log("-> res: ", String(item[filterKeys[0]]) === String(findData[filterKeys[0]]));
+                if (someCompareObj(findData, item)) {
+                    return true
+                } else {
+                    return false
+                }
             }
         },
         mounted(){
@@ -115,6 +175,27 @@
             window.onresize = (event) => {
                 this.customResize();
             };
+        },
+        computed: {
+            sortedList () {
+                console.log(">start sortedList");
+                let inSortKey = this.sortFlag.key,
+                    abcSort = this.sortFlag.sorted,
+                    data = this.tableData.content.slice(),
+                    arrFindData = this.findText,
+                    filterKeys = Object.keys(arrFindData);
+                if ( filterKeys.length !== 0) {
+                    data = data.filter(this.customFilter);
+                }
+                if (inSortKey) {
+                    if (abcSort) {
+                        data = data.sort(this.customCompare)
+                    } else {
+                        data = data.sort(this.customCompare).reverse(this.customCompare)
+                    }
+                }
+                return (data)
+            }
         }
     }
 </script>
@@ -148,11 +229,12 @@
 
     #hTable{
         background: rgba(221, 228, 253, 0.925);
+        color: rgba(255,255,255,0.66);
+        cursor: pointer;
         overflow-x: visible;
         /* font-size: 20px; */
         /* font-style: italic; */
         /* font-weight: bold; */
-        font-family: 'Merriweather', serif;
     }
 
     #bTable{
@@ -172,7 +254,19 @@
         text-align: center;
         padding: 0px;
         width: 100%;
+        font-family: 'Merriweather', serif;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        /* background-color: #42b983; */
+        background-color: #515dc9;
     }
+
+    .active {
+        color: #fff;
+    }
+
     #cTable{
         width: 100%;
         text-align: center;
@@ -184,6 +278,39 @@
     } */
     td{
         border: 1px solid grey;
+    }
+
+    .arrow {
+    display: inline-block;
+    align-items: center;
+    width: 0;
+    height: 0;
+    margin-left: 2px;
+    opacity: 0.66;
+    }
+
+    .arrow.asc {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 4px solid #fff;
+    }
+
+    .arrow.dsc {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #fff;
+    }
+
+    #headTd {
+    display: grid;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr 0.2fr;
+    /* grid-template-columns: 1fr 50px; */
+    align-items: center;
+    grid-gap: 0.0vw;
+    width: 100%;
+    height: 100%;
+    padding: 0px;
     }
 </style>
 

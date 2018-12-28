@@ -1,268 +1,399 @@
-<template>
-    <div>
-        <div id = "firstGrid">
-            <div id = "hbTable">
-                <div id = "hTable" :style = "{ width: tHeadWidth }">
-                    <table id = "headTable">
-                        <tr>
-                            <td v-for="(nameRow, iKey, indNam) in tableData.info" :width = "nameRow.sizeProc" @click = "sortBy(iKey)" :class="{ active: sortKey == iKey }">
-                                {{ nameRow.description || nameRow.name }}
-                                <span class="arrow" :class="sortFlag.sorted && sortFlag.key === iKey ? 'asc' : 'dsc'">
-                                </span>
-                            </td>
-                        </tr>
-                        <tr v-show="filterVisible" >
-                            <td  v-for="nameRow in tableData.info" :width = "nameRow.sizeProc">
-                            <input type = "text" style = "width: 100%; text-align: center" :placeholder="nameRow.description || nameRow.name ">
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-                <div id = "bTable">
-                    <table id = "cTable">
-                        <tr id  = "cLine" v-for="(lineContent, indContent) in sortedList" :key="lineContent.id" @mouseover="markBack(indContent)" @mouseout="cleanMarkBack" :class = "(markTrmMouse && markRow===indContent) ? 'trBack' : '' ">
-                            <td v-for="(cell, cKey, indName) in lineContent" :width = "tableData.info[cKey].sizeProc"> {{ cell }} </td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-            <div id = "panFoot">
-                <button @click="showFilter()">Filter</button>
-            </div>
-        </div>
-    </div>
-</template>
-    
-<script>
-    import Vue from 'vue'
-    import {tableData1} from './tmpArray.js'
-    export default {
-        data () {
-            return{
-                sortKey: "",
-                sortFlag: {oldKey: '', key: '', sorted: false},
-                tHeadWidth: "100%",
-                tBodyWidth: 1920,
-                startTableBody: 158,
-                clientWidth: window.innerWidth,
-                clientHeight: window.innerHeight,
-                markRow: '',
-                markTrmMouse: false,
-                filterVisible: false,
-                filterValue: {},
-                tableData: tableData1,
-            }
+const tableData1 = {
+    info:{
+        cId: {
+            'name': 'cId',
+            'description': 'Идентификатор',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
         },
-        methods:{
-            showFilter() {
-                console.log(">start showFilter");
-                this.filterVisible = !this.filterVisible;
-                console.log("-> filter Visible: ", this.filterVisible);
-                this.tHeadWidth = (this.tBodyWidth*100)/document.body.offsetWidth + "%"
-            },
-            sortBy(key){
-                console.log(">start sortBy");
-                // alert("Sort by: "+ key);
-                this.sortKey = key;
-                this.sortFlag.oldKey = this.sortFlag.key;
-                this.sortFlag.key = key;
-                if (this.sortFlag.oldKey==="" || this.sortFlag.oldKey !== this.sortFlag.key) {
-                    this.sortFlag.sorted = true;
-                }
-                if (this.sortFlag.oldKey === this.sortFlag.key) {
-                    this.sortFlag.sorted = !this.sortFlag.sorted;
-                }
-                console.log("DATA:", this.sortFlag.sorted);
-            },
-            async calcSizeHead(){
-                console.log (">start calcSizeHead");
-                let allWidth = 0,
-                    arrWidthCell = [],
-                    keysInfo,
-                    tableInfo = this.tableData.info,
-                    indKey;
-                keysInfo = Object.keys(tableInfo);
-                console.log("-> keysInfo: ", keysInfo);
-                for(indKey = 0; indKey < keysInfo.length; indKey++) {
-                    tableInfo[keysInfo[indKey]].size = Math.max(tableInfo[keysInfo[indKey]].name.length, tableInfo[keysInfo[indKey]].description.length, tableInfo[keysInfo[indKey]].size);
-                    allWidth+=tableInfo[keysInfo[indKey]].size;
-                    arrWidthCell.push({'name': keysInfo[indKey], 'size': tableInfo[keysInfo[indKey]].size})
-                    console.log("-> tableInfo.size: ", tableInfo[keysInfo[indKey]].size);
-                    console.log("-> allWidth: ", allWidth);
-                }
-                console.log("-> arrWidthCell: ", arrWidthCell);
-                this.calcWidthProc(allWidth, arrWidthCell);
-            },
-            async calcWidthProc(maxWidth, arrHead){
-                console.log (">start calcWidthProc");
-                let indArrHead;
-                console.log("=> clientWidth: ", this.clientWidth);
-                if (maxWidth > this.clientWidth) {
-                    console.log("=> width maxWidth: ", maxWidth);
-                    for (indArrHead = 0; indArrHead < arrHead.length; indArrHead++) {
-                        this.tableData.info[arrHead[indArrHead].name].sizeProc = String((arrHead[indArrHead].size));
-                    }
-                } else {
-                    console.log("=> width clientWidth %: ", this.tBodyWidth);
-                    for (indArrHead = 0; indArrHead < arrHead.length; indArrHead++) {
-                        this.tableData.info[arrHead[indArrHead].name].sizeProc = String((arrHead[indArrHead].size*100)/maxWidth)+'%';
-                    }
-                }
-            },
-            markBack(idRow){
-                console.log(">start markBack");
-                console.log(">start idRow: ", idRow);
-                this.markRow = idRow;
-                this.markTrmMouse = true;
-            },
-            cleanMarkBack(){
-                console.log(">start cleanMarkBack");
-                this.markTrmMouse = false;
-            },
-            customResize() {
-                // ����������� �������� ����
-                this.clientWidth = window.innerWidth;
-                this.clientHeight = window.innerHeight;
-                // ����������� ������� �������� ��� ���������
-                this.tBodyWidth = document.getElementById("bTable").scrollWidth;
-                this.tHeadWidth = (this.tBodyWidth*100)/document.body.offsetWidth + "%"
-                this.calcSizeHead();
-            },
-            customCompare (a, b) {
-                let inSortKey = this.sortKey;
-                if (a[inSortKey] < b[inSortKey]) {
-                    return -1;
-                }
-                if (a[inSortKey] > b[inSortKey]) {
-                    return 1;
-                }
-                return 0;
-            }
+        cName1: {
+            'name': 'cName',
+            'description': 'Название первой колонки',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
         },
-        mounted(){
-            this.customResize();
-            console.log("===> tableData: ", this.tableData);
-            window.onresize = (event) => {
-                this.customResize();
-            };
+        cName2: {
+            'name': 'cName',
+            'description': 'Название второй колонки',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
         },
-        computed: {
-            sortedList () {
-                console.log(">start sortedList");
-                let inSortKey = this.sortKey,
-                    data = this.tableData.content;
-                if (inSortKey) {
-                    data.sort(this.customCompare)
-                }
-                if (this.sortFlag.oldKey === this.sortFlag.key && Boolean(this.sortFlag.key)) {
-                    return(data.reverse(this.customCompare))
-                } else {
-                    return(data)
-                }
-            }
+        cName3: {
+            'name': 'cName',
+            'description': 'Название третьей колонки',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        },
+        cName4: {
+            'name': 'cName',
+            'description': 'Название четвёртой колонки',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        },
+        cName5: {
+            'name': 'cName',
+            'description': 'Название пятой колонки',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        },
+        cName6: {
+            'name': 'cName',
+            'description': 'Название шестой колонки',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        },
+        cName7: {
+            'name': 'cName',
+            'description': 'Название седьмой колонки',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        },
+        cName8: {
+            'name': 'cName',
+            'description': 'Название восьмой колонки',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        },
+        cName9: {
+            'name': 'cName',
+            'description': 'Название девятой колонки, которая длиннее остальных',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        },
+        cComment: {
+            'name': 'cComment',
+            'description': '',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
         }
+    },
+    content: [
+    {
+        'cId': 111,
+        'cName1': 'name1',
+        'cName2': 'name1',
+        'cName3': 'name31',
+        'cName4': 'name1',
+        'cName5': 'name111',
+        'cName6': 'name122',
+        'cName7': 'name551',
+        'cName8': 'name1',
+        'cName9': 'name1',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 2,
+        'cName1': 'name2',
+        'cName2': 'name2',
+        'cName3': 'name2',
+        'cName4': 'name2',
+        'cName5': 'name552',
+        'cName6': 'name2',
+        'cName7': 'name2',
+        'cName8': 'name2',
+        'cName9': 'name2',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 3,
+        'cName1': 'name3',
+        'cName2': 'name3',
+        'cName3': 'name3',
+        'cName4': 'name3',
+        'cName5': 'name223',
+        'cName6': 'name3',
+        'cName7': 'name3',
+        'cName8': 'name3',
+        'cName9': 'name3',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 4,
+        'cName1': 'name4',
+        'cName2': 'name4',
+        'cName3': 'name4',
+        'cName4': 'name4',
+        'cName5': 'name4',
+        'cName6': 'name4',
+        'cName7': 'name4',
+        'cName8': 'name4',
+        'cName9': 'name4',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 5,
+        'cName1': 'name5',
+        'cName2': 'name5',
+        'cName3': 'name5',
+        'cName4': 'name5',
+        'cName5': 'name5',
+        'cName6': 'name5',
+        'cName7': 'name5',
+        'cName8': 'name5',
+        'cName9': 'name5',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 1,
+        'cName1': 'name6',
+        'cName2': 'name6',
+        'cName3': 'name6',
+        'cName4': 'name6',
+        'cName5': 'name6',
+        'cName6': 'name6',
+        'cName7': 'name6',
+        'cName8': 'name6',
+        'cName9': 'name6',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 7,
+        'cName1': 'name7',
+        'cName2': 'name7',
+        'cName3': 'name7',
+        'cName4': 'name7',
+        'cName5': 'name7',
+        'cName6': 'name7',
+        'cName7': 'name7',
+        'cName8': 'name7',
+        'cName9': 'name7',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 8,
+        'cName1': 'name8',
+        'cName2': 'name8',
+        'cName3': 'name8',
+        'cName4': 'name8',
+        'cName5': 'name8',
+        'cName6': 'name8',
+        'cName7': 'name8',
+        'cName8': 'name8',
+        'cName9': 'name8',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 9,
+        'cName1': 'name9',
+        'cName2': 'name9',
+        'cName3': 'name9',
+        'cName4': 'name9',
+        'cName5': 'name9',
+        'cName6': 'name9',
+        'cName7': 'name9',
+        'cName8': 'name9',
+        'cName9': 'name9',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 10,
+        'cName1': 'name10',
+        'cName2': 'name10',
+        'cName3': 'name10',
+        'cName4': 'name10',
+        'cName5': 'name10',
+        'cName6': 'name10',
+        'cName7': 'name10',
+        'cName8': 'name10',
+        'cName9': 'name10',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 11,
+        'cName1': 'name11',
+        'cName2': 'name11',
+        'cName3': 'name11',
+        'cName4': 'name11',
+        'cName5': 'name11',
+        'cName6': 'name11',
+        'cName7': 'name11',
+        'cName8': 'name11',
+        'cName9': 'name11',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 12,
+        'cName1': 'name12',
+        'cName2': 'name12',
+        'cName3': 'name12',
+        'cName4': 'name12',
+        'cName5': 'name12',
+        'cName6': 'name12',
+        'cName7': 'name12',
+        'cName8': 'name12',
+        'cName9': 'name12',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 13,
+        'cName1': 'name13',
+        'cName2': 'name13',
+        'cName3': 'name13',
+        'cName4': 'name13',
+        'cName5': 'name13',
+        'cName6': 'name13',
+        'cName7': 'name13',
+        'cName8': 'name13',
+        'cName9': 'name13',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 14,
+        'cName1': 'name14',
+        'cName2': 'name14',
+        'cName3': 'name14',
+        'cName4': 'name14',
+        'cName5': 'name14',
+        'cName6': 'name14',
+        'cName7': 'name14',
+        'cName8': 'name14',
+        'cName9': 'name14',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 15,
+        'cName1': 'name15',
+        'cName2': 'name15',
+        'cName3': 'name15',
+        'cName4': 'name15',
+        'cName5': 'name15',
+        'cName6': 'name15',
+        'cName7': 'name15',
+        'cName8': 'name15',
+        'cName9': 'name15',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 16,
+        'cName1': 'name16',
+        'cName2': 'name16',
+        'cName3': 'name16',
+        'cName4': 'name16',
+        'cName5': 'name16',
+        'cName6': 'name16',
+        'cName7': 'name16',
+        'cName8': 'name16',
+        'cName9': 'name16',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 17,
+        'cName1': 'name17',
+        'cName2': 'name17',
+        'cName3': 'name17',
+        'cName4': 'name17',
+        'cName5': 'name17',
+        'cName6': 'name17',
+        'cName7': 'name17',
+        'cName8': 'name17',
+        'cName9': 'name17',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 18,
+        'cName1': 'name18',
+        'cName2': 'name18',
+        'cName3': 'name18',
+        'cName4': 'name18',
+        'cName5': 'name18',
+        'cName6': 'name18',
+        'cName7': 'name18',
+        'cName8': 'name18',
+        'cName9': 'name18',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 19,
+        'cName1': 'name19',
+        'cName2': 'name19',
+        'cName3': 'name19',
+        'cName4': 'name19',
+        'cName5': 'name19',
+        'cName6': 'name19',
+        'cName7': 'name19',
+        'cName8': 'name19',
+        'cName9': 'name19',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 20,
+        'cName1': 'name20',
+        'cName2': 'name20',
+        'cName3': 'name20',
+        'cName4': 'name20',
+        'cName5': 'name20',
+        'cName6': 'name20',
+        'cName7': 'name20',
+        'cName8': 'name20',
+        'cName9': 'name20',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 21,
+        'cName1': 'name21',
+        'cName2': 'name22',
+        'cName3': 'name21',
+        'cName4': 'name21',
+        'cName5': 'name21',
+        'cName6': 'name21',
+        'cName7': 'name21',
+        'cName8': 'name21',
+        'cName9': 'name21',
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 22,
+        'cName1': 'name22',
+        'cName2': 'name22',
+        'cName3': 'name22',
+        'cName4': 'name22',
+        'cName5': 'name22',
+        'cName6': 'name22',
+        'cName7': 'name22',
+        'cName8': 'name22',
+        'cName9': 'name20',
+        'cComment': 'comment 2'
     }
-</script>
-    
-<style>
+    ]
+}
 
-    .trBack {
-        background-color: rgba(205, 215, 252, 0.925);
+const tableData2 = {
+    info:{
+        cId: {
+            'name': 'cId',
+            'description': 'Идентификатор',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        },
+        cComment: {
+            'name': 'cComment',
+            'description': '',
+            'size': 45,
+            'sizeProc': '0%',
+            'visible': true
+        }
+    },
+    content: [
+    {
+        'cId': 1,
+        'cComment': 'comment 1'
+    },
+    {
+        'cId': 2,
+        'cComment': 'comment 2'
     }
-    #firstGrid {
-        display: grid;
-        grid-template-rows: repeat (2, 1fr);
-        grid-template-columns: 1fr;
-        grid-gap: 0.2vw;
-        height: 100%;
-        width: 100%;
-        background: rgba(205, 215, 252, 0.925);
-        padding: 0px;
-    }
-
-    #hbTable {
-        display: grid;
-        position: relative;
-        grid-template-rows: auto 1fr ;
-        grid-template-columns: 1fr;
-        grid-gap: 0.1vw;
-        height: 91vh;
-        overflow-x: auto;
-        padding: 0px;
-    }
-
-    #hTable{
-        background: rgba(221, 228, 253, 0.925);
-        color: rgba(255,255,255,0.66);
-        cursor: pointer;
-        overflow-x: visible;
-        /* font-size: 20px; */
-        /* font-style: italic; */
-        /* font-weight: bold; */
-    }
-
-    #bTable{
-        width: 100%;
-        background: rgb(255, 255, 255);
-        overflow-y: scroll;
-        overflow-x: visible;
-        padding: 0px;
-    }
-    
-    #panFoot{
-        vertical-align: middle;
-        width: 100%;
-        background: rgba(221, 228, 253, 0.925);
-    }
-    #headTable{
-        text-align: center;
-        padding: 0px;
-        width: 100%;
-        font-family: 'Merriweather', serif;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-        /* background-color: #42b983; */
-        background-color: #515dc9;
-    }
-
-    .active {
-        color: #fff;
-    }
-
-    #cTable{
-        width: 100%;
-        text-align: center;
-        border: 1px solid grey;
-        padding: 0px;
-    }
-    /* #cLine{
-        border: 1px solid grey;
-    } */
-    td{
-        border: 1px solid grey;
-    }
-
-    .arrow {
-    display: inline-block;
-    vertical-align: middle;
-    width: 0;
-    height: 0;
-    margin-left: 5px;
-    opacity: 0.66;
-    }
-
-    .arrow.asc {
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-bottom: 4px solid #fff;
-    }
-
-    .arrow.dsc {
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 4px solid #fff;
-    }
-</style>
-
+    ]
+}
+export {tableData1, tableData2};
